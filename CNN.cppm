@@ -10,16 +10,18 @@ module;
 #include "tools.h"
 export module CNN;
 
+import Matrix;
 
 // 卷积层
 class ConvLayer {
     static constexpr size_t kernel_row{3}, kernel_col{3}, kernel_count{5};
+    static constexpr size_t image_weight_{255}, image_height_{255};
 
-    std::array<std::array<double,kernel_row * kernel_col>, kernel_count> kernels_data_{};
-    std::array<std::mdspan<double, std::extents<size_t, kernel_row,kernel_col>>, kernel_count> kernels_{};
+    std::array<nl::Matrix<double, kernel_row, kernel_col>, kernel_count> kernels_{};
+    std::mdspan<unsigned char, std::extents<size_t, image_height_, image_weight_>> image_;
 
     void init_kernels() {
-        // kernels_data_ = {
+        // kernels_ = {
         //     {
         //         0.f, 1.f, 0.f,
         //         0.f, 1.f, 0.f,
@@ -31,21 +33,23 @@ class ConvLayer {
         std::mt19937 gen(rd());
         std::uniform_real_distribution dis(-1.0, 1.0);
 
-        int count{};
-        while (count++ < kernel_count) {
-            int pos{};
-            while (pos < kernel_row * kernel_col) {
-                kernels_data_[count][pos++] = dis(gen);
+        for (int count = 0; count < kernel_count; count ++) {
+            for (int i = 0; i < kernel_row; i++) {
+                for (int j = 0; j < kernel_col; j++) {
+                    kernels_[count][i, j] = dis(gen);
+                }
             }
         }
 
-        for (int i = 0; i < kernel_count; i++)
-            kernels_[i] = std::mdspan<double, std::extents<size_t, kernel_row, kernel_col>> (kernels_data_[i].data(), kernel_row, kernel_col);
 
     }
 public:
-    ConvLayer() {
+    explicit ConvLayer(unsigned char *image_data) :
+        image_(std::mdspan<unsigned char, std::extents<size_t, image_height_, image_weight_>>(image_data))
+    {
         init_kernels();
+    }
+    void conv() {
 
     }
 
